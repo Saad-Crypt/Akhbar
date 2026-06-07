@@ -3,131 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualités</title>
+    <title>Actualités Maroc & Golfe</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f5f5f5; }
         .header { background: #1e3a8a; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px; }
-        .article { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
-        .error { background: #fee; color: #c00; padding: 15px; border-radius: 8px; margin: 10px 0; font-size: 13px; }
-        .debug { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 11px; word-break: break-all; }
-        button { background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 5px; }
+        .article { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .title { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #1e3a8a; line-height: 1.3; }
+        .source { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .desc { font-size: 14px; color: #333; line-height: 1.5; }
+        .date { font-size: 11px; color: #999; margin-top: 8px; }
+        .error { background: #fee; color: #c00; padding: 15px; border-radius: 8px; text-align: center; }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 10px; }
+        button { background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📰 Actualités</h1>
-        <button onclick="testAPI()">🔍 Tester API</button>
-        <button onclick="loadNews()">📰 Charger News</button>
+        <h1>📰 Actualités : Maroc, Golfe & Iran</h1>
+        <p id="status">Chargement...</p>
+        <button onclick="loadNews()">🔄 Actualiser maintenant</button>
     </div>
-    <div id="debug"></div>
     <div id="container"></div>
 
     <script>
         const API_KEY = "pub_b7dbe6602fe348b3b22727e649c18fd9";
         
-        async function testAPI() {
-            const debug = document.getElementById('debug');
-            const container = document.getElementById('container');
-            debug.innerHTML = '<div class="debug">Test en cours...</div>';
-            container.innerHTML = '';
-            
-            try {
-                const url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&country=ma&language=fr`;
-                
-                debug.innerHTML = `
-                    <div class="debug">
-                        <strong>🔍 DEBUG COMPLET :</strong><br><br>
-                        <strong>URL appelée :</strong><br>
-                        ${url}<br><br>
-                        <strong>Clé API :</strong> ${API_KEY}<br>
-                        <strong>Longueur clé :</strong> ${API_KEY.length} caractères<br>
-                    </div>
-                `;
-                
-                const response = await fetch(url);
-                
-                debug.innerHTML += `
-                    <div class="debug">                        <strong>Réponse HTTP :</strong><br>
-                        Status: ${response.status}<br>
-                        StatusText: ${response.statusText}<br>
-                        OK: ${response.ok}<br>
-                        Type: ${response.type}<br>
-                        URL: ${response.url}<br>
-                    </div>
-                `;
-                
-                const text = await response.text();
-                
-                debug.innerHTML += `
-                    <div class="debug">
-                        <strong>Données brutes (200 premiers caractères) :</strong><br>
-                        ${text.substring(0, 200)}...
-                    </div>
-                `;
-                
-                try {
-                    const data = JSON.parse(text);
-                    
-                    if (data.status === 'success') {
-                        container.innerHTML = `<div style="background:#d4edda;color:#155724;padding:15px;border-radius:8px;">
-                            ✅ SUCCÈS !<br>
-                            ${data.results.length} articles trouvés
-                        </div>`;
-                    } else {
-                        container.innerHTML = `<div class="error">
-                            ❌ Erreur API<br>
-                            <strong>Message :</strong> ${data.message || 'Inconnu'}<br>
-                            <strong>Status :</strong> ${data.status}
-                        </div>`;
-                    }
-                } catch (e) {
-                    container.innerHTML = `<div class="error">❌ Erreur JSON : ${e.message}</div>`;
-                }
-                
-            } catch (error) {
-                debug.innerHTML += `
-                    <div class="error">
-                        <strong>❌ ERREUR DE CONNEXION :</strong><br>
-                        ${error.name}<br>
-                        ${error.message}<br>
-                        <br>
-                        <strong>Cause possible :</strong><br>
-                        - Problème de connexion internet<br>
-                        - Blocage CORS<br>
-                        - Clé API invalide
-                    </div>
-                `;            }
-        }
-        
         async function loadNews() {
             const container = document.getElementById('container');
-            container.innerHTML = '<div style="text-align:center;padding:20px;">Chargement...</div>';
+            const status = document.getElementById('status');
+            container.innerHTML = '<div style="text-align:center;padding:40px;">Chargement des actualités...</div>';
             
             try {
+                // Utiliser les mêmes paramètres que le test qui fonctionne
                 const url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&country=ma,ae,sa,qa,kw,bh,om,ir&category=politics,business&language=fr`;
+                
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data.status === 'success' && data.results.length > 0) {
+                if (data.status === 'success') {
+                    const now = new Date();
+                    status.textContent = `${data.results.length} articles - Mis à jour à ${now.toLocaleTimeString('fr-FR')} (Auto: 30 min)`;
                     container.innerHTML = '';
-                    data.results.slice(0, 5).forEach(article => {
+                    
+                    if (data.results.length === 0) {
+                        container.innerHTML = '<div class="error">Aucun article trouvé. Essayez plus tard.</div>';
+                        return;
+                    }
+                    
+                    // Afficher les 15 premiers articles
+                    const articlesToShow = data.results.slice(0, 15);
+                    
+                    articlesToShow.forEach(article => {
                         const div = document.createElement('div');
                         div.className = 'article';
-                        div.innerHTML = `<div style="font-weight:bold;margin-bottom:5px;">${article.title}</div><div style="font-size:12px;color:#666;">${article.source_id}</div>`;
+                        const date = new Date(article.pubDate).toLocaleString('fr-FR', { 
+                            day: 'numeric', 
+                            month: 'short', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+                        
+                        const description = article.description || article.content || 'Aucune description disponible';
+                        const shortDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
+                        
+                        div.innerHTML = `
+                            <div class="title">${article.title || 'Sans titre'}</div>
+                            <div class="source">📍 ${article.source_id || 'Source inconnue'} | 🌍 ${article.country || 'N/A'}</div>
+                            <div class="desc">${shortDesc}</div>
+                            <div class="date">📅 ${date}</div>
+                            ${article.link ? `<a href="${article.link}" target="_blank" style="color:#1e3a8a;margin-top:8px;display:inline-block;font-weight:bold;">Lire la suite →</a>` : ''}
+                        `;
                         container.appendChild(div);
                     });
                 } else {
-                    container.innerHTML = `<div class="error">Aucun article trouvé</div>`;
+                    container.innerHTML = `<div class="error">Erreur API: ${data.message || 'Inconnue'}</div>`;
                 }
             } catch (error) {
-                container.innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
+                container.innerHTML = `<div class="error">Erreur de connexion: ${error.message}</div>`;
             }
         }
         
-        // Test automatique au démarrage
+        // Chargement automatique au démarrage
         window.onload = function() {
-            setTimeout(testAPI, 1000);
+            loadNews();
         };
+        
+        // Rafraîchissement automatique toutes les 30 minutes
+        setInterval(loadNews, 30 * 60 * 1000);
     </script>
 </body>
 </html>
