@@ -1,109 +1,196 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualités Maroc & Golfe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Actualités</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f5f5f5; }
-        .header { background: #1e3a8a; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px; }
-        .article { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .title { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #1e3a8a; line-height: 1.3; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f5f5f5; 
+            padding: 10px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .header { 
+            background: #1e3a8a; 
+            color: white; 
+            padding: 20px 15px; 
+            text-align: center; 
+            border-radius: 10px; 
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .header h1 { font-size: 22px; margin-bottom: 10px; }
+        .article { 
+            background: white; 
+            padding: 15px; 
+            margin-bottom: 12px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .title { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #1e3a8a; }
         .source { font-size: 12px; color: #666; margin-bottom: 5px; }
         .desc { font-size: 14px; color: #333; line-height: 1.5; }
-        .date { font-size: 11px; color: #999; margin-top: 8px; }
-        .error { background: #fee; color: #c00; padding: 15px; border-radius: 8px; text-align: center; }
-        .refreshing { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; text-align: center; margin: 10px 0; }
-        button { background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 5px; cursor: pointer; }
-        button:disabled { background: #ccc; }
+        .error { 
+            background: #fee; 
+            color: #c00; 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center; 
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .loading { 
+            text-align: center; 
+            padding: 40px 20px;
+            color: #666;
+            font-size: 16px;        }
+        button { 
+            background: #fff; 
+            color: #1e3a8a; 
+            border: 2px solid #fff;
+            padding: 12px 25px; 
+            border-radius: 5px; 
+            margin: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:active { background: #e0e0e0; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📰 Actualités : Maroc, Golfe & Iran</h1>
-        <p id="status">Initialisation...</p>
-        <button id="btnRefresh" onclick="charger()">🔄 Actualiser maintenant</button>
+        <h1>📰 Actualités Maroc</h1>
+        <div id="status" style="margin:10px 0; font-size:14px;">Chargement...</div>
+        <button onclick="chargerActualites()">🔄 Actualiser</button>
     </div>
-    <div id="news"></div>
+    <div id="container"></div>
 
     <script>
-        const API_KEY = "pub_b7dbe6602fe348b3b22727e649c18fd9";
-        let dernierChargement = null;
+        var API_KEY = "pub_b7dbe6602fe348b3b22727e649c18fd9";
+        var container = null;
+        var statusEl = null;
         
-        async function charger() {
-            const news = document.getElementById('news');
-            const status = document.getElementById('status');
-            const btnRefresh = document.getElementById('btnRefresh');
+        function init() {
+            container = document.getElementById('container');
+            statusEl = document.getElementById('status');
+            setTimeout(chargerActualites, 500);
+        }
+        
+        function chargerActualites() {
+            if (!container) container = document.getElementById('container');
+            if (!statusEl) statusEl = document.getElementById('status');
             
-            // Empêcher le spam de clics
-            btnRefresh.disabled = true;
-            btnRefresh.textContent = '⏳ Chargement...';
+            var timestamp = new Date().getTime();
+            container.innerHTML = '<div class="loading">⏳ Chargement des actualités...</div>';
+            statusEl.innerHTML = 'Chargement...';
             
-            // Ajouter un timestamp pour éviter le cache
-            const timestamp = new Date().getTime();
-            const url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&country=ma,ae,sa,qa,kw,bh,om,ir&category=politics,business&language=fr&_t=${timestamp}`;
+            var url = 'https://newsdata.io/api/1/news?apikey=' + API_KEY + '&country=ma&language=fr&_t=' + timestamp;
             
-            try {
-                const response = await fetch(url, {
-                    cache: 'no-cache',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',                        'Pragma': 'no-cache',
-                        'Expires': '0'
+            // Utiliser XMLHttpRequest au lieu de fetch (plus compatible WebView)
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.timeout = 30000; // 30 secondes
+            
+            xhr.onload = function() {                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        if (data.status === 'success' && data.results && data.results.length > 0) {
+                            var now = new Date();
+                            statusEl.innerHTML = '✅ ' + data.results.length + ' articles - ' + now.toLocaleTimeString('fr-FR');
+                            afficherArticles(data.results);
+                        } else {
+                            container.innerHTML = '<div class="error">❌ Aucun article trouvé</div>';
+                            statusEl.innerHTML = 'Erreur';
+                        }
+                    } catch (e) {
+                        container.innerHTML = '<div class="error">❌ Erreur: ' + e.message + '</div>';
+                        statusEl.innerHTML = 'Erreur JSON';
                     }
+                } else {
+                    container.innerHTML = '<div class="error">❌ Erreur HTTP: ' + xhr.status + '</div>';
+                    statusEl.innerHTML = 'Erreur ' + xhr.status;
+                }
+            };
+            
+            xhr.onerror = function() {
+                container.innerHTML = '<div class="error">❌ Erreur de connexion<br><small>Vérifiez votre connexion internet</small></div>';
+                statusEl.innerHTML = 'Erreur réseau';
+            };
+            
+            xhr.ontimeout = function() {
+                container.innerHTML = '<div class="error">❌ Timeout<br><small>La connexion est trop lente</small></div>';
+                statusEl.innerHTML = 'Timeout';
+            };
+            
+            xhr.send();
+        }
+        
+        function afficherArticles(results) {
+            if (!container) container = document.getElementById('container');
+            
+            container.innerHTML = '';
+            var maxArticles = Math.min(results.length, 15);
+            
+            for (var i = 0; i < maxArticles; i++) {
+                var article = results[i];
+                var div = document.createElement('div');
+                div.className = 'article';
+                
+                var title = article.title || 'Sans titre';
+                var source = article.source_id || 'Source inconnue';
+                var country = article.country || 'N/A';
+                var description = article.description || article.content || '';
+                if (description.length > 200) {                    description = description.substring(0, 200) + '...';
+                }
+                
+                var pubDate = new Date(article.pubDate);
+                var dateStr = pubDate.toLocaleString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
                 });
                 
-                const data = await response.json();
+                var html = '<div class="title">' + escapeHtml(title) + '</div>';
+                html += '<div class="source">📍 ' + escapeHtml(source) + ' | 🌍 ' + escapeHtml(country) + '</div>';
+                html += '<div class="desc">' + escapeHtml(description) + '</div>';
+                html += '<div class="date">📅 ' + dateStr + '</div>';
                 
-                if (data.status === 'success' && data.results.length > 0) {
-                    const maintenant = new Date();
-                    status.innerHTML = `✅ ${data.results.length} articles<br><small>Dernière MAJ: ${maintenant.toLocaleTimeString('fr-FR')}</small>`;
-                    news.innerHTML = '';
-                    
-                    // Afficher les 15 premiers articles
-                    data.results.slice(0, 15).forEach((article, index) => {
-                        const div = document.createElement('div');
-                        div.className = 'article';
-                        const date = new Date(article.pubDate).toLocaleString('fr-FR', { 
-                            day: 'numeric', 
-                            month: 'short', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                        });
-                        
-                        const description = article.description || article.content || 'Aucune description disponible';
-                        const shortDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
-                        
-                        div.innerHTML = `
-                            <div class="title">${article.title || 'Sans titre'}</div>
-                            <div class="source">📍 ${article.source_id || 'Source inconnue'} | 🌍 ${article.country || 'N/A'}</div>
-                            <div class="desc">${shortDesc}</div>
-                            <div class="date">📅 ${date}</div>
-                            ${article.link ? `<a href="${article.link}" target="_blank" style="color:#1e3a8a;margin-top:8px;display:inline-block;font-weight:bold;">Lire la suite →</a>` : ''}
-                        `;
-                        news.appendChild(div);
-                    });
-                    
-                    dernierChargement = maintenant;
-                } else {
-                    news.innerHTML = '<div class="error">Aucun article trouvé. Réessayez dans quelques minutes.</div>';
+                if (article.link) {
+                    html += '<a href="' + escapeHtml(article.link) + '" target="_blank" style="color:#1e3a8a;margin-top:8px;display:inline-block;font-weight:bold;">Lire la suite →</a>';
                 }
-            } catch (error) {
-                news.innerHTML = `<div class="error">Erreur de connexion: ${error.message}<br><small>Vérifiez votre connexion internet</small></div>`;
-            } finally {
-                btnRefresh.disabled = false;
-                btnRefresh.textContent = '🔄 Actualiser maintenant';
+                
+                div.innerHTML = html;
+                container.appendChild(div);
             }
         }
         
-        // Chargement automatique au démarrage
-        window.onload = function() {            setTimeout(charger, 500);
-        };
+        function escapeHtml(text) {
+            if (!text) return '';
+            var map = {
+                '&': '&',
+                '<': '<',
+                '>': '>',
+                '"': '"',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
         
-        // Rafraîchissement automatique toutes les 30 minutes (1800000 ms)
-        setInterval(function() {
-            console.log('Auto-refresh à:', new Date().toLocaleTimeString('fr-FR'));
-            charger();
-        }, 30 * 60 * 1000);
+        // Initialisation au chargement
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        // Auto-refresh toutes les 30 minutes
+        setInterval(chargerActualites, 30 * 60 * 1000);
     </script>
 </body>
-</html>
+</html>                            
