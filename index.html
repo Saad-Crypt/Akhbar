@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualités Maroc</title>
+    <title>Actualités Iran</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f5f5f5; }
         .header { background: #1e3a8a; color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 15px; }
@@ -16,7 +16,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>📰 Actualités Maroc</h1>
+        <h1>📰 Actualités Iran</h1>
         <p id="status">Chargement...</p>
         <button onclick="load()">🔄 Actualiser</button>
     </div>
@@ -34,7 +34,7 @@
             status.innerHTML = 'Actualisation...';
             
             // URL SANS paramètres personnalisés (sinon erreur 422)
-            var url = 'https://newsdata.io/api/1/news?apikey=' + API_KEY + '&country=ma&language=fr';
+            var url = 'https://newsdata.io/api/1/news?apikey=' + API_KEY + '&country=ir,ma,lb &language=ar';
             
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
